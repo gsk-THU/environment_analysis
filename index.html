@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MicroWatch-LDIR · 微塑料监测数据智能分析平台</title>
+  <meta name="description" content="Offline LDIR microplastic data analysis and quality control — 100% local, no APIs.">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=20261102c">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ======================= Sidebar ======================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="assets/logo.svg" alt="MicroWatch-LDIR logo" class="brand-logo">
+        <div>
+          <div class="brand-name">MicroWatch<span>-LDIR</span></div>
+          <div class="brand-sub">微塑料监测数据智能分析平台</div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item active" data-page="import">
+          <span class="nav-num">01</span>
+          <span class="nav-label">Data Import<span class="nav-zh">数据导入</span></span>
+        </button>
+        <button class="nav-item" data-page="site">
+          <span class="nav-num">02</span>
+          <span class="nav-label">Site Analysis<span class="nav-zh">单点分析</span></span>
+        </button>
+        <button class="nav-item" data-page="comparison">
+          <span class="nav-num">03</span>
+          <span class="nav-label">Site Comparison<span class="nav-zh">多点对比</span></span>
+        </button>
+        <button class="nav-item" data-page="quality">
+          <span class="nav-num">04</span>
+          <span class="nav-label">Quality Assessment<span class="nav-zh">质量评价</span></span>
+        </button>
+        <button class="nav-item" data-page="report">
+          <span class="nav-num">05</span>
+          <span class="nav-label">Report Center<span class="nav-zh">报告中心</span></span>
+        </button>
+      </nav>
+
+      <div class="global-filters">
+        <div class="gf-title">Global Filters · 全局筛选</div>
+        <label class="gf-field">
+          <span class="gf-label">HQI Threshold <output id="hqi-out">0.75</output></span>
+          <input type="range" id="hqi-slider" min="0.60" max="0.90" step="0.05" value="0.75">
+          <div class="gf-ticks"><span>0.60</span><span>0.65</span><span>0.70</span><span>0.75</span><span>0.80</span><span>0.85</span><span>0.90</span></div>
+        </label>
+        <label class="gf-field">
+          <span class="gf-label">Min Particle Size (μm)</span>
+          <input type="number" id="minsize-input" min="0" step="1" placeholder="No limit 不限制">
+        </label>
+        <label class="gf-check">
+          <input type="checkbox" id="common-size-toggle">
+          <span>Common size range ≥ 20 μm<br><small>统一粒径范围后再比较</small></span>
+        </label>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="offline-dot"></span> 100% Offline · 本地运行 · 无API
+      </div>
+    </aside>
+
+    <!-- ======================= Main ======================= -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="page-title">Data Import</h1>
+          <div id="page-subtitle" class="page-subtitle">Import LDIR Excel exports · 导入LDIR检测结果</div>
+        </div>
+        <div class="topbar-status" id="topbar-status"></div>
+      </header>
+
+      <div class="pages">
+
+        <!-- ============ 01 Data Import ============ -->
+        <section class="page active" id="page-import">
+          <div class="hero card">
+            <div class="hero-text">
+              <h2>MicroWatch-LDIR</h2>
+              <p class="hero-en">Microplastic Monitoring &amp; Data Intelligence — Offline LDIR Microplastic Data Analysis and Quality Control</p>
+              <p class="hero-zh">将已有LDIR检测结果转化为可追溯、可筛选、可比较、可评价的环境监测数据。所有计算均在浏览器本地完成，不接入任何API、不训练模型。</p>
+            </div>
+            <div class="hero-badge">
+              <img src="assets/logo.svg" alt="">
+              <span>No API · No Cloud<br>本地离线分析</span>
+            </div>
+          </div>
+
+          <div class="kpi-grid" id="kpi-grid">
+            <div class="kpi card">
+              <div class="kpi-icon icon-blue">◍</div>
+              <div class="kpi-value" id="kpi-total">—</div>
+              <div class="kpi-label">Total Particles</div>
+              <div class="kpi-zh">总颗粒记录</div>
+            </div>
+            <div class="kpi card">
+              <div class="kpi-icon icon-teal">◈</div>
+              <div class="kpi-value" id="kpi-target">—</div>
+              <div class="kpi-label">Target Polymers</div>
+              <div class="kpi-zh">初步目标聚合物颗粒</div>
+            </div>
+            <div class="kpi card">
+              <div class="kpi-icon icon-purple">▦</div>
+              <div class="kpi-value" id="kpi-sites">—</div>
+              <div class="kpi-label">Analyzed Sites</div>
+              <div class="kpi-zh">已导入采样区域</div>
+            </div>
+            <div class="kpi card">
+              <div class="kpi-icon icon-amber">✓</div>
+              <div class="kpi-value" id="kpi-qc">—</div>
+              <div class="kpi-label">Quality-Controlled Particles</div>
+              <div class="kpi-zh" id="kpi-qc-note">HQI≥0.75的目标颗粒</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <h3>Upload LDIR Excel Files <small>· 上传Excel数据</small></h3>
+              <div class="dropzone" id="dropzone" tabindex="0">
+                <div class="dz-icon">⇪</div>
+                <div class="dz-text"><b>Drop .xlsx files here</b> or click to browse<br>
+                  <small>支持格式 .xlsx · 程序读取 Particles 工作表并自动识别Site · 可同时上传两个文件</small></div>
+                <input type="file" id="file-input" accept=".xlsx" multiple hidden>
+              </div>
+              <div class="demo-row">
+                <span class="demo-label">No Excel at hand? 没有数据文件？</span>
+                <button class="btn btn-ghost" id="btn-demo-12">Load demo · Site1+2</button>
+                <button class="btn btn-ghost" id="btn-demo-34">Load demo · Site3+4</button>
+                <button class="btn btn-primary" id="btn-demo-all">Load all demo data</button>
+                <button class="btn btn-danger-ghost" id="btn-clear">Clear all</button>
+              </div>
+              <div id="import-warnings"></div>
+              <div id="files-list" class="files-list"></div>
+              <div id="site-detect"></div>
+            </div>
+
+            <div class="card">
+              <h3>Analysis Settings <small>· 分析参数</small></h3>
+              <p class="muted small">筛选参数与原始数据分开保存；改变阈值只重新计算结果，不会修改原始记录。<br>Filtering parameters are stored separately from the raw records.</p>
+              <div class="form-grid">
+                <label>Sample Volume · 水样体积 <small>(per site, in Site Analysis)</small></label>
+                <div class="muted small">每个Site在「Site Analysis」中单独输入体积</div>
+                <label>Volume Unit 体积单位</label>
+                <select id="set-unit"><option value="L" selected>L</option><option value="mL">mL</option></select>
+                <label>Analyzed Fraction 扫描面积比例 (f)</label>
+                <input type="number" id="set-fraction" min="0.01" max="1" step="0.01" placeholder="待确认 · unconfirmed">
+                <label>Blank Count 空白样颗粒数 (mean N̄<sub>b</sub>)</label>
+                <input type="number" id="set-blank" min="0" step="0.1" placeholder="空白 · not provided">
+                <label>Blank Fraction 空白样扫描比例 (f<sub>b</sub>)</label>
+                <input type="number" id="set-blank-fraction" min="0.01" max="1" step="0.01" placeholder="same as f">
+                <label>Recovery Rate 回收率 (R, 0–1)</label>
+                <input type="number" id="set-recovery" min="0.01" max="1" step="0.01" placeholder="空白 · not provided">
+              </div>
+              <details class="overrides" id="overrides-box">
+                <summary>Material classification · 材料归类调整 <span class="chip chip-gray" id="override-count">0</span></summary>
+                <p class="muted small">存在定义争议的材料不建议直接认定为微塑料，可在此调整归类（仅影响统计口径，不修改原始数据）。Natural Polyamide 属天然材料，不会与 PA 合并。</p>
+                <div id="overrides-list"></div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 02 Site Analysis ============ -->
+        <section class="page" id="page-site">
+          <div id="site-empty"></div>
+          <div id="site-content" style="display:none">
+            <div class="toolbar">
+              <label class="toolbar-item">Selected Site · 选择采样点
+                <select id="site-select"></select>
+              </label>
+              <span class="toolbar-note" id="site-select-note"></span>
+            </div>
+
+            <div class="kpi-grid" id="site-kpis"></div>
+
+            <div class="card concentration-card">
+              <h3><span class="star">★</span> Concentration Analysis · 微塑料浓度自动计算</h3>
+              <div class="conc-layout">
+                <div class="conc-inputs">
+                  <div class="form-grid">
+                    <label>Sampling Site 采样点</label>
+                    <input type="text" id="conc-site" disabled>
+                    <label>Sample Volume 水样体积</label>
+                    <input type="number" id="conc-volume" min="0" step="any" placeholder="留空 = 不计算浓度">
+                    <label>Volume Unit 体积单位</label>
+                    <select id="conc-unit"><option value="L">L</option><option value="mL">mL</option></select>
+                    <label>HQI Threshold（global）</label>
+                    <input type="text" id="conc-hqi" disabled>
+                    <label>Min Particle Size（global）</label>
+                    <input type="text" id="conc-minsize" disabled>
+                  </div>
+                  <p class="muted small">输入体积后自动读取当前筛选条件下的颗粒数并计算 particles/L；修改HQI阈值或体积后结果自动更新。仅输入体积即可，无需手动输入颗粒数。</p>
+                  <div class="formula-box" id="conc-formulas">
+                    <div class="formula">C<sub>MP</sub> = N<sub>MP</sub> / V</div>
+                    <div class="formula">C<sub>raw</sub> = N<sub>MP</sub> / (V · f)</div>
+                    <div class="formula">C<sub>corrected</sub> = max(0, N<sub>s</sub>/f<sub>s</sub> − N̄<sub>b</sub>/f<sub>b</sub>) / (V · R)</div>
+                  </div>
+                </div>
+                <div class="conc-result">
+                  <div id="conc-highlight"></div>
+                  <div id="conc-flags"></div>
+                </div>
+              </div>
+              <div id="conc-tables" class="conc-tables"></div>
+            </div>
+
+            <div class="chart-grid">
+              <div class="card chart-card"><h4>Polymer Composition <small>聚合物组成</small></h4><div class="chart-box"><canvas id="chart-comp"></canvas></div></div>
+              <div class="card chart-card"><h4>Particle Size Distribution <small>粒径分布</small></h4><div class="chart-box"><canvas id="chart-size"></canvas></div></div>
+              <div class="card chart-card"><h4>HQI Distribution <small>光谱匹配质量分布</small></h4><div class="chart-box"><canvas id="chart-hqi"></canvas></div></div>
+              <div class="card chart-card"><h4>Particle Morphology <small>形态特征 (L/W vs diameter)</small></h4><div class="chart-box"><canvas id="chart-morph"></canvas></div></div>
+            </div>
+
+            <div class="card">
+              <h3>Particle Records <small>· 颗粒明细数据</small></h3>
+              <div class="table-filters" id="table-filters">
+                <label>Identification
+                  <select id="tf-ident"><option value="">All</option></select>
+                </label>
+                <label>Category
+                  <select id="tf-category">
+                    <option value="">All</option>
+                    <option value="target">Target</option>
+                    <option value="review">Review</option>
+                    <option value="nonTarget">Non-target</option>
+                  </select>
+                </label>
+                <label>HQI min <input type="number" id="tf-hqi" min="0" max="1" step="0.01" placeholder="—"></label>
+                <label>Diameter ≥ <input type="number" id="tf-dmin" step="any" placeholder="μm"></label>
+                <label>Diameter ≤ <input type="number" id="tf-dmax" step="any" placeholder="μm"></label>
+                <label class="check-inline"><input type="checkbox" id="tf-excluded"> Only excluded 仅看被排除</label>
+                <span class="tf-spacer"></span>
+                <button class="btn btn-ghost btn-sm" id="tf-reset">Reset</button>
+              </div>
+              <div class="table-wrap" id="records-table"></div>
+              <div class="pager" id="records-pager"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 03 Site Comparison ============ -->
+        <section class="page" id="page-comparison">
+          <div id="cmp-empty"></div>
+          <div id="cmp-content" style="display:none">
+            <div class="toolbar">
+              <span class="toolbar-note" id="cmp-note"></span>
+              <span class="tf-spacer"></span>
+              <button class="btn btn-ghost btn-sm" id="btn-common-size">Apply Common Size Range: ≥ 20 μm</button>
+            </div>
+
+            <div class="chart-grid two">
+              <div class="card chart-card"><h4>图1 · Target Polymer Counts <small>目标聚合物数量：筛选 vs 未筛选</small></h4><div class="chart-box"><canvas id="chart-cmp-targets"></canvas></div></div>
+              <div class="card chart-card"><h4>图2 · Polymer Composition <small>聚合物组成比较（堆叠）</small></h4><div class="chart-box"><canvas id="chart-cmp-comp"></canvas></div></div>
+              <div class="card chart-card"><h4>图3 · Size Distribution <small>粒径分布比较（统一区间）</small></h4><div class="chart-box"><canvas id="chart-cmp-size"></canvas></div></div>
+              <div class="card chart-card"><h4>Indicators <small>核心指标对比</small></h4><div class="table-wrap" id="cmp-indicator-table"></div></div>
+            </div>
+
+            <div class="card concentration-card">
+              <h3><span class="star">★</span> Concentration Comparison · 微塑料浓度比较</h3>
+              <p class="muted small">为每个Site分别输入水样体积后自动计算浓度（particles/L）。比较采用统一的HQI阈值与粒径下限；浓度为未经空白和回收率校正的结果。</p>
+              <div id="cmp-volumes" class="cmp-volumes"></div>
+              <div class="conc-tables">
+                <div class="chart-box tall"><canvas id="chart-cmp-conc"></canvas></div>
+                <div class="table-wrap" id="cmp-conc-table"></div>
+              </div>
+              <div id="cmp-ratio"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 04 Quality Assessment ============ -->
+        <section class="page" id="page-quality">
+          <div id="qa-empty"></div>
+          <div id="qa-content" style="display:none">
+            <div class="card">
+              <h3>Local Rule Engine <small>· 本地专家规则引擎（R1–R6，规则式决策支持，非机器学习）</small></h3>
+              <div class="table-wrap" id="qa-rule-matrix"></div>
+            </div>
+            <div class="card">
+              <h3>HQI Threshold Sensitivity <small>· HQI阈值敏感性分析（不设粒径限制）</small></h3>
+              <div class="conc-tables">
+                <div class="chart-box tall"><canvas id="chart-qa-sweep"></canvas></div>
+                <div class="table-wrap" id="qa-sweep-table"></div>
+              </div>
+              <div id="qa-retention" class="mt"></div>
+            </div>
+            <div class="card">
+              <h3>Site Assessments <small>· 自动生成评价说明</small></h3>
+              <div id="qa-summaries"></div>
+            </div>
+            <div class="card">
+              <h3>Data Completeness &amp; Quality Indicators <small>· 数据完整性与质量指标</small></h3>
+              <div class="table-wrap" id="qa-completeness"></div>
+              <div id="qa-conc-notes" class="mt"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 05 Report Center ============ -->
+        <section class="page" id="page-report">
+          <div id="rep-empty"></div>
+          <div id="rep-content" style="display:none">
+            <div class="toolbar">
+              <span class="toolbar-note">报告由本地规则与计算结果生成 · All reports are generated locally.</span>
+              <span class="tf-spacer"></span>
+              <button class="btn btn-ghost btn-sm" id="btn-csv-summary">Export Summary CSV</button>
+              <button class="btn btn-ghost btn-sm" id="btn-csv-records">Export Records CSV</button>
+              <button class="btn btn-ghost btn-sm" id="btn-html-report">Download HTML Report</button>
+              <button class="btn btn-primary btn-sm" id="btn-print">Print / Save as PDF</button>
+            </div>
+            <div class="card report-card">
+              <div id="report-preview" class="report-preview"></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- third-party libraries, bundled locally (offline requirement) -->
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <!-- configuration -->
+  <script src="config/polymer-categories.js?v=20261102c"></script>
+  <script src="config/analysis-rules.js?v=20261102c"></script>
+  <!-- application -->
+  <script src="js/excel-reader.js?v=20261102c"></script>
+  <script src="js/demo-data.js?v=20261102c"></script>
+  <script src="js/site-analysis.js?v=20261102c"></script>
+  <script src="js/concentration.js?v=20261102c"></script>
+  <script src="js/quality-control.js?v=20261102c"></script>
+  <script src="js/charts.js?v=20261102c"></script>
+  <script src="js/report-export.js?v=20261102c"></script>
+  <script src="js/app.js?v=20261102c"></script>
+</body>
+</html>
