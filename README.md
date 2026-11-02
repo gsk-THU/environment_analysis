@@ -6,7 +6,7 @@ A fully offline single-page web application that turns LDIR (Laser Direct Infrar
 detection results into traceable, filterable, comparable and assessable environmental monitoring
 data — built as a course project prototype for four sampling sites (Site1–Site4).
 
-🔗 **Live demo (GitHub Pages):** https://gsk-thu.github.io/microwatch-ldir/
+🔗 **Live demo (GitHub Pages):** https://gsk-thu.github.io/environment_analysis/
 
 ## Features 功能
 
